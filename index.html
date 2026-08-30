@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>가계부</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f7f5;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif}
+header{background:#138a3d;color:#fff;padding:30px 18px 24px;border-radius:0 0 28px 28px}h1{margin:0 0 18px;font-size:30px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.card{background:#fff;color:#222;border-radius:15px;padding:12px 9px}.card b{display:block;font-size:17px;margin-top:5px}.total{margin-top:9px;background:#fff;color:#138a3d;border-radius:15px;padding:12px;font-size:21px;font-weight:900;text-align:center}
+main{padding:15px}.box{background:#fff;border-radius:18px;padding:15px;margin-bottom:14px;box-shadow:0 2px 9px #0000000a}h2{font-size:18px;margin:0 0 12px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.tabs button{background:#edf1ee;color:#138a3d}.tabs button.active{background:#138a3d;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}label{font-size:13px;color:#777}input,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:11px;font-size:16px;background:#fff;margin:5px 0 10px}
+button{border:0;border-radius:11px;padding:12px;font-size:16px;font-weight:700}.save{background:#138a3d;color:#fff;width:100%}.danger{background:#ffecec;color:#d33}
+.account{border:1px solid #ddd;border-radius:14px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between}.money{font-weight:900}.income{color:#138a3d}.expense{color:#d33}.transfer{color:#5a54c8}
+.item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #eee}.item:last-child{border:0}.date{font-size:12px;color:#888;margin-top:3px}.right{text-align:right}.small{font-size:13px;color:#777}.empty{text-align:center;color:#888;padding:18px}
+</style>
+</head>
+<body>
+<header>
+<h1>가계부</h1>
+<div class="cards">
+<div class="card">🏦 통장<b id="a0">0원</b></div>
+<div class="card">💵 현금<b id="a1">0원</b></div>
+<div class="card">🔐 금고<b id="a2">0원</b></div>
+</div>
+<div class="total">전체 잔액 <span id="balance">0원</span></div>
+</header>
+<main>
+<div class="box">
+<div class="tabs"><button id="tabEntry" class="active" onclick="showTab('entry')">수입·지출</button><button id="tabTransfer" onclick="showTab('transfer')">통장·현금·금고 이동</button></div>
+
+<div id="entryForm">
+<h2>내역 추가</h2>
+<div class="grid">
+<div><label>날짜</label><input id="date" type="date"></div>
+<div><label>구분</label><select id="type"><option value="expense">지출</option><option value="income">수입</option></select></div>
+</div>
+<label>보관 장소</label>
+<select id="account"><option value="0">🏦 통장</option><option value="1">💵 현금</option><option value="2">🔐 금고</option></select>
+<label>항목</label><input id="memo" placeholder="예: 월급, 식비, 교통비">
+<label>금액</label><input id="amount" type="number" inputmode="numeric" placeholder="금액 입력">
+<button class="save" onclick="addEntry()">저장</button>
+</div>
+
+<div id="transferForm" style="display:none">
+<h2>돈 옮기기</h2>
+<div class="small">내 계좌끼리 이동하는 것은 전체 잔액에는 영향을 주지 않고, 각 장소의 잔액만 바뀝니다.</div>
+<div class="grid" style="margin-top:10px">
+<div><label>보내는 곳</label><select id="from"><option value="0">🏦 통장</option><option value="1">💵 현금</option><option value="2">🔐 금고</option></select></div>
+<div><label>받는 곳</label><select id="to"><option value="1">💵 현금</option><option value="0">🏦 통장</option><option value="2">🔐 금고</option></select></div>
+</div>
+<label>금액</label><input id="moveAmount" type="number" inputmode="numeric" placeholder="옮길 금액">
+<button class="save" onclick="transfer()">이동하기</button>
+</div>
+</div>
+
+<div class="box">
+<h2>현재 잔액</h2>
+<div class="account"><span>🏦 통장</span><span class="money" id="b0">0원</span></div>
+<div class="account"><span>💵 현금</span><span class="money" id="b1">0원</span></div>
+<div class="account"><span>🔐 금고</span><span class="money" id="b2">0원</span></div>
+</div>
+
+<div class="box">
+<h2>전체 내역</h2><div id="list"></div>
+<button class="danger" style="width:100%;margin-top:10px" onclick="clearAll()">전체 삭제</button>
+</div>
+</main>
+
+<script>
+const names=["통장","현금","금고"], icons=["🏦","💵","🔐"];
+let data=JSON.parse(localStorage.getItem("unifiedBudget")||'{"items":[],"transfers":[]}');
+function $(id){return document.getElementById(id)}
+function won(n){return Number(n).toLocaleString("ko-KR")+"원"}
+$("date").value=new Date().toISOString().slice(0,10);
+
+function showTab(t){
+ $("entryForm").style.display=t==="entry"?"block":"none";
+ $("transferForm").style.display=t==="transfer"?"block":"none";
+ $("tabEntry").classList.toggle("active",t==="entry");$("tabTransfer").classList.toggle("active",t==="transfer");
+}
+function balances(){
+ let a=[0,0,0];
+ data.items.forEach(x=>a[x.account]+=x.type==="income"?x.amount:-x.amount);
+ data.transfers.forEach(x=>{a[x.from]-=x.amount;a[x.to]+=x.amount});
+ return a;
+}
+function render(){
+ let a=balances(), total=a.reduce((s,v)=>s+v,0);
+ a.forEach((v,i)=>{$("a"+i).textContent=won(v);$("b"+i).textContent=won(v)});
+ $("balance").textContent=won(total);
+ let all=[...data.items.map((x,i)=>({...x,kind:"entry",idx:i})),...data.transfers.map((x,i)=>({...x,kind:"transfer",idx:i}))].sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+ $("list").innerHTML=all.length?all.map(x=>{
+   if(x.kind==="transfer") return `<div class="item"><div><b>💸 ${names[x.from]} → ${names[x.to]}</b><div class="date">${x.date} · 계좌 이동</div></div><div class="right"><b class="transfer">${won(x.amount)}</b></div></div>`;
+   return `<div class="item"><div><b>${icons[x.account]} ${esc(x.memo)}</b><div class="date">${x.date} · ${names[x.account]}</div></div><div class="right"><b class="${x.type==="income"?"income":"expense"}">${x.type==="income"?"+":"−"}${won(x.amount)}</b></div></div>`;
+ }).join(""):'<div class="empty">아직 내역이 없습니다.</div>';
+ localStorage.setItem("unifiedBudget",JSON.stringify(data));
+}
+function addEntry(){
+ let memo=$("memo").value.trim(), amount=Number($("amount").value);
+ if(!memo||amount<=0){alert("항목과 금액을 입력해주세요.");return}
+ data.items.push({date:$("date").value,type:$("type").value,account:Number($("account").value),memo,amount});
+ $("memo").value="";$("amount").value="";render();
+}
+function transfer(){
+ let from=Number($("from").value),to=Number($("to").value),amount=Number($("moveAmount").value),a=balances();
+ if(from===to){alert("서로 다른 곳을 선택해주세요.");return}
+ if(amount<=0){alert("금액을 입력해주세요.");return}
+ if(a[from]<amount){alert("보내는 곳의 잔액이 부족합니다.");return}
+ data.transfers.push({date:$("date").value,from,to,amount});
+ $("moveAmount").value="";render();
+}
+function clearAll(){if(confirm("모든 가계부 기록을 삭제할까요?")){data={items:[],transfers:[]};render()}}
+function esc(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+render();
+</script>
+</body></html>
