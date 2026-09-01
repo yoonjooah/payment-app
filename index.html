@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="theme-color" content="#fffafb"/>
+<title>윤주아의 가계부</title>
+<style>
+:root{
+  --pink:#f8d9e4; --pink2:#ffeaf1; --pink3:#f5bfd1;
+  --text:#443d40; --muted:#9b8f93; --line:#f1d9e2; --blue:#1688ff;
+  --safe:#fffaf0; --cash:#fff5fa; --bank:#f3f9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.app{max-width:860px;margin:0 auto;padding:24px 26px 90px}
+.header{display:flex;align-items:center;justify-content:center;gap:14px;margin:18px 0 34px}
+.header h1{font-size:48px;line-height:1.1;margin:0;font-weight:800;letter-spacing:-2px}
+.profile-wrap{position:relative;width:62px;height:62px;flex:0 0 62px}
+.profile{width:62px;height:62px;border-radius:50%;object-fit:cover;border:3px solid var(--pink3);background:var(--pink2);display:block}
+.profile-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;pointer-events:none}
+.profile-wrap input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:30px}
+.tab{border:2px solid var(--line);background:#fff;border-radius:50px;padding:24px 10px;font-size:30px;font-weight:750;color:var(--muted)}
+.tab.active{background:var(--pink2);border-color:var(--pink3);color:#9a6076}
+.panel{display:none}.panel.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:30px}
+.card{border:2px solid var(--line);border-radius:28px;padding:26px 18px;min-height:220px}
+.card.safe{background:var(--safe)} .card.cash{background:var(--cash)} .card.bank{background:var(--bank)}
+.card .label{font-size:28px;margin-bottom:18px}.card .amount{font-size:41px;font-weight:800;word-break:break-all}.card .sub{font-size:24px;color:var(--muted);margin-top:18px}
+.box{border:2px solid var(--line);border-radius:28px;padding:28px 38px;margin:0 0 30px;background:#fff}
+.box h2{font-size:32px;margin:0 0 28px}
+.grid-entry{display:grid;grid-template-columns:1.7fr 1.1fr 1fr 1fr;gap:12px;align-items:end}
+.field label{display:block;font-weight:750;font-size:24px;margin:0 0 10px}
+input,select{width:100%;height:76px;border:2px solid #edd8e0;border-radius:22px;background:#fff;color:var(--text);font-size:26px;padding:0 18px;outline:none}
+input:focus,select:focus{border-color:var(--pink3)}
+.actions{display:flex;justify-content:center;gap:18px;margin-top:24px}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:20px;background:var(--pink2);color:#a25d78;font-weight:800;font-size:25px;padding:18px 30px}
+.btn.danger{color:#ff668f;background:#fff0f4}
+.table{width:100%;border-collapse:collapse;font-size:23px}
+.table th{background:var(--pink2);padding:18px 8px}
+.table td{padding:18px 8px;border-bottom:2px solid #f4e5ea;text-align:center;vertical-align:middle}
+.money{color:var(--blue);white-space:nowrap}
+.delete{border:0;background:#fff0f4;color:#ff668f;border-radius:18px;padding:12px 16px;font-weight:750}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.summary .mini{border:2px solid var(--line);border-radius:22px;padding:20px}
+.summary .mini .t{color:var(--muted);font-size:20px}.summary .mini .v{font-weight:850;font-size:29px;margin-top:8px}
+.month-grid{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end}
+.month-top{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.help{color:var(--muted);font-size:21px;line-height:1.65;margin-top:18px}
+.expense-add{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.add-wide{width:100%;margin-top:20px}
+.exp-table-wrap{overflow:visible}
+.exp-table{width:100%;table-layout:fixed}
+.exp-table th:nth-child(1){width:22%}
+.exp-table th:nth-child(2){width:23%}
+.exp-table th:nth-child(3){width:40%}
+.exp-table th:nth-child(4){width:15%}
+.th-small{font-size:14px;color:#9b8f93;font-weight:650}
+.manage-wrap{display:flex;gap:6px;align-items:center;justify-content:center}
+.paid-input{height:58px;width:100%;min-width:0;font-size:20px;border-radius:18px;padding:0 10px;text-align:center}
+.save-small{border:0;background:var(--pink2);color:#a25d78;font-weight:800;border-radius:16px;padding:12px 9px;white-space:nowrap}
+.month-footer{margin-top:28px;border-top:2px solid var(--line);padding-top:26px}
+.remaining{font-size:31px;font-weight:850;display:flex;justify-content:space-between;gap:20px}
+.remaining strong{color:#b35d7c}
+.empty{padding:28px;color:var(--muted);text-align:center}
+@media(max-width:650px){
+ .app{padding:20px 18px 80px}.header{margin-top:12px}.header h1{font-size:37px}
+ .profile-wrap,.profile{width:52px;height:52px}.profile-wrap{flex-basis:52px}
+ .tab{font-size:25px;padding:20px 8px}.cards{gap:9px}.card{padding:22px 12px;min-height:185px}
+ .card .label{font-size:23px}.card .amount{font-size:31px}.card .sub{font-size:19px}
+ .box{padding:24px 20px}.box h2{font-size:29px}.grid-entry{grid-template-columns:1fr 1fr}
+ .field label{font-size:20px} input,select{font-size:21px;height:66px}.table{font-size:17px}
+ .table th,.table td{padding:14px 5px}.summary{grid-template-columns:1fr}.summary .mini{padding:16px}
+ .month-top,.expense-add{grid-template-columns:1fr}.month-grid{grid-template-columns:1fr}.remaining{font-size:26px}
+ .exp-table{font-size:15px}
+ .exp-table th,.exp-table td{padding:12px 3px}
+ .exp-table th:nth-child(1){width:20%}
+ .exp-table th:nth-child(2){width:23%}
+ .exp-table th:nth-child(3){width:43%}
+ .exp-table th:nth-child(4){width:14%}
+ .paid-input{height:52px;font-size:17px;padding:0 6px}
+ .save-small{font-size:14px;padding:11px 7px}
+ .exp-table .delete{font-size:14px;padding:11px 7px}
+ .th-small{font-size:11px}
+}
+</style>
+
+<style id="compact-ui-final">
+.app{max-width:760px!important;padding:14px 14px 65px!important}
+.header{gap:9px!important;margin:10px 0 20px!important}
+.header h1{font-size:32px!important;letter-spacing:-1.2px!important}
+.profile-wrap{position:relative!important;width:46px!important;height:46px!important;flex:0 0 46px!important}
+.profile{width:46px!important;height:46px!important;border-radius:50%!important;object-fit:cover!important;border:2px solid #f5bfd1!important;display:block}
+.profile-placeholder{position:absolute!important;inset:0!important;display:flex;align-items:center;justify-content:center;font-size:22px;pointer-events:none}
+.profile-wrap input{position:absolute!important;inset:0!important;opacity:0!important;width:100%!important;height:100%!important;cursor:pointer}
+.tabs{gap:10px!important;margin-bottom:18px!important}
+.tab{padding:14px 7px!important;font-size:20px!important}
+.cards{gap:8px!important;margin-bottom:18px!important}
+.card{padding:16px 10px!important;min-height:140px!important;border-radius:20px!important}
+.card .label{font-size:18px!important;margin-bottom:8px!important}
+.card .amount{font-size:27px!important}
+.card .sub{font-size:16px!important;margin-top:8px!important}
+.box{padding:18px 16px!important;margin-bottom:18px!important;border-radius:20px!important}
+.box h2{font-size:23px!important;margin-bottom:16px!important}
+.field label{font-size:16px!important}
+input,select{height:50px!important;font-size:16px!important;border-radius:14px!important;padding:7px 10px!important}
+button{font-size:16px!important}
+.table,.exp-table{font-size:14px!important}
+.table th,.table td,.exp-table th,.exp-table td{padding:10px 4px!important}
+.summary .mini{padding:12px!important}
+.mini .k{font-size:15px!important}.mini .v{font-size:22px!important}
+.help{font-size:15px!important;line-height:1.5!important}
+.paid-input{height:48px!important;font-size:16px!important;min-width:110px!important}
+.remaining{font-size:22px!important}
+@media(max-width:650px){
+ .app{padding:12px 12px 60px!important}
+ .header h1{font-size:30px!important}
+ .profile-wrap,.profile{width:43px!important;height:43px!important}.profile-wrap{flex-basis:43px!important}
+ .tab{font-size:19px!important;padding:13px 6px!important}
+ .card{min-height:132px!important;padding:14px 9px!important}
+ .card .label{font-size:17px!important}.card .amount{font-size:25px!important}.card .sub{font-size:15px!important}
+ .box{padding:16px 14px!important}.box h2{font-size:22px!important}
+ input,select{height:48px!important;font-size:15px!important}
+}
+</style>
+
+
+<style id="monthly-horizontal-final">
+/* 매달 지출: 아이폰에서도 항목들을 가로로 이어서 표시 */
+.month-top{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+}
+.expense-add{
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:8px!important;
+}
+.month-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:8px!important;
+  align-items:end!important;
+}
+.exp-table-wrap{
+  width:100%!important;
+  overflow-x:auto!important;
+  -webkit-overflow-scrolling:touch!important;
+}
+.exp-table{
+  width:100%!important;
+  min-width:560px!important;
+  white-space:nowrap!important;
+}
+.exp-table th,.exp-table td{
+  padding:8px 5px!important;
+  font-size:13px!important;
+}
+.manage-wrap{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  gap:5px!important;
+  flex-wrap:nowrap!important;
+}
+.paid-input{
+  min-width:90px!important;
+  width:100px!important;
+  height:43px!important;
+  font-size:14px!important;
+}
+.save-small{
+  white-space:nowrap!important;
+  padding:10px 9px!important;
+  font-size:13px!important;
+}
+.month-footer{
+  margin-top:18px!important;
+  padding-top:16px!important;
+}
+.remaining{
+  font-size:20px!important;
+}
+@media(max-width:650px){
+  .month-top{grid-template-columns:1fr 1fr!important;gap:6px!important}
+  .expense-add{grid-template-columns:1fr 1fr!important;gap:6px!important}
+  .month-grid{grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important}
+  .exp-table{min-width:520px!important}
+  .exp-table th,.exp-table td{font-size:12px!important;padding:7px 4px!important}
+  .paid-input{width:82px!important;min-width:82px!important;height:40px!important;font-size:13px!important}
+  .save-small{font-size:12px!important;padding:9px 7px!important}
+}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>윤주아의 가계부</h1>
+    <div class="profile-wrap" title="프로필 사진 추가">
+      <img id="profileImg" class="profile" alt="프로필 사진" style="display:none"/>
+      <div id="profilePlaceholder" class="profile-placeholder">🐶</div>
+      <input id="profileInput" type="file" accept="image/*"/>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="ledger">가계부</button>
+    <button class="tab" data-tab="monthly">매달 지출</button>
+  </div>
+
+  <section id="ledger" class="panel active">
+    <div class="cards">
+      <div class="card safe"><div class="label">금고 🔒</div><div id="safeBalance" class="amount">0원</div><div id="safeIncome" class="sub">수입 0원</div></div>
+      <div class="card cash"><div class="label">현금 👛</div><div id="cashBalance" class="amount">0원</div><div id="cashIncome" class="sub">수입 0원</div></div>
+      <div class="card bank"><div class="label">계좌 🏦</div><div id="bankBalance" class="amount">0원</div><div id="bankIncome" class="sub">수입 0원</div></div>
+    </div>
+
+    <div class="box">
+      <h2>가계부 내역</h2>
+      <div class="grid-entry">
+        <div class="field"><label>날짜</label><input id="txDate" type="date"></div>
+        <div class="field"><label>내용</label><input id="txContent" placeholder="내용"></div>
+        <div class="field"><label>구분</label><select id="txType"><option value="income">수입</option><option value="expense">지출</option></select></div>
+        <div class="field"><label>금액</label><input id="txAmount" inputmode="numeric" placeholder="금액"></div>
+        <div class="field" style="grid-column:1/-1"><label>보관/사용처</label>
+          <select id="txAsset"><option value="safe">금고 🔒</option><option value="cash">현금 👛</option><option value="bank">계좌 🏦</option></select>
+        </div>
+      </div>
+      <div class="actions"><button id="addTx" class="btn">추가하기</button><button id="resetLedger" class="btn danger">초기화</button></div>
+    </div>
+
+    <div class="box">
+      <h2>가계부 목록</h2>
+      <div style="overflow-x:auto">
+        <table class="table" style="min-width:650px">
+          <thead><tr><th>날짜</th><th>내용</th><th>구분</th><th>보관/사용처</th><th>금액</th><th>삭제</th></tr></thead>
+          <tbody id="txBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>가계부 합계</h2>
+      <div class="summary">
+        <div class="mini"><div class="t">총 수입</div><div id="sumIncome" class="v">0원</div></div>
+        <div class="mini"><div class="t">총 지출</div><div id="sumExpense" class="v">0원</div></div>
+        <div class="mini"><div class="t">현재 합계</div><div id="sumBalance" class="v">0원</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="monthly" class="panel">
+    <div class="box">
+      <h2>매달 지출 관리</h2>
+      <div class="month-top">
+        <div class="field"><label>총 모아둔 금액</label><input id="savedTotal" inputmode="numeric" placeholder="예: 3000000"></div>
+        <div class="field"><label>총 낸 금액</label><input id="paidTotal" value="0" readonly></div>
+      </div>
+      <div class="month-grid">
+        <div class="help">총 낸 금액은 아래 각 지출의 <b>관리</b> 칸에 내가 실제로 낸 금액을 적고 저장하면 자동으로 합산돼요.</div>
+        <button id="saveSaved" class="btn">저장</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>매달 지출</h2>
+      <div class="expense-add">
+        <div class="field"><label>지출 이름</label><input id="expName" placeholder="지출 이름"></div>
+        <div class="field"><label>금액</label><input id="expAmount" inputmode="numeric" placeholder="금액"></div>
+      </div>
+      <button id="addExpense" class="btn add-wide">+ 지출 추가</button>
+
+      <div class="exp-table-wrap" style="margin-top:26px">
+        <table class="table exp-table">
+          <thead><tr><th>지출 이름</th><th>고정 금액</th><th>관리<br><span class="th-small">이번 달 낸 금액</span></th><th>삭제</th></tr></thead>
+          <tbody id="expBody"></tbody>
+        </table>
+      </div>
+
+      <div class="help" style="margin-top:20px">
+        <b>고정 금액</b>은 처음 등록한 매달 지출 금액이라 바뀌지 않아요.
+        실제로 이번 달에 낸 금액이 다르면 <b>관리</b> 칸에 그 금액을 적고 저장하세요.
+        관리 금액들만 위의 <b>총 낸 금액</b>에 합산됩니다.
+      </div>
+      <div class="month-footer">
+        <div class="remaining"><span>총 모아둔 금액 - 총 낸 금액</span><strong id="remainingTotal">0원</strong></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const KEY='yoonjua_budget_v4';
+const defaultState={transactions:[],expenses:[],savedTotal:0,profile:''};
+let state=load();
+
+function load(){
+  try{
+    const x=JSON.parse(localStorage.getItem(KEY));
+    return {...defaultState,...(x||{})};
+  }catch(e){ return {...defaultState}; }
+}
+function save(){ localStorage.setItem(KEY,JSON.stringify(state)); }
+function num(v){ return Math.max(0, Number(String(v||'').replace(/[^0-9]/g,''))||0); }
+function won(v){ return (Number(v)||0).toLocaleString('ko-KR')+'원'; }
+function todayLocal(){
+  const d=new Date(); const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+  return z.toISOString().slice(0,10);
+}
+document.getElementById('txDate').value=todayLocal();
+
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); document.getElementById(b.dataset.tab).classList.add('active');
+}));
+
+document.getElementById('profileInput').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{state.profile=r.result;save();renderProfile();};
+  r.readAsDataURL(f);
+});
+function renderProfile(){
+  const img=document.getElementById('profileImg'), ph=document.getElementById('profilePlaceholder');
+  if(state.profile){img.src=state.profile;img.style.display='block';ph.style.display='none';}
+  else{img.style.display='none';ph.style.display='flex';}
+}
+
+document.getElementById('addTx').addEventListener('click',()=>{
+  const date=document.getElementById('txDate').value || todayLocal();
+  const content=document.getElementById('txContent').value.trim();
+  const type=document.getElementById('txType').value;
+  const asset=document.getElementById('txAsset').value;
+  const amount=num(document.getElementById('txAmount').value);
+  if(!content){alert('내용을 입력해 주세요.');return;}
+  if(amount<=0){alert('금액을 입력해 주세요.');return;}
+  state.transactions.unshift({id:Date.now(),date,content,type,asset,amount});
+  save(); renderLedger();
+  document.getElementById('txContent').value='';
+  document.getElementById('txAmount').value='';
+});
+
+document.getElementById('resetLedger').addEventListener('click',()=>{
+  if(confirm('가계부 내역을 모두 초기화할까요?')){
+    state.transactions=[];save();renderLedger();
+  }
+});
+
+function deleteTx(id){
+  state.transactions=state.transactions.filter(x=>x.id!==id);save();renderLedger();
+}
+function assetName(a){return a==='safe'?'금고 🔒':a==='cash'?'현금 👛':'계좌 🏦';}
+function renderLedger(){
+  const assets={safe:{in:0,out:0},cash:{in:0,out:0},bank:{in:0,out:0}};
+  let tin=0,tout=0;
+  state.transactions.forEach(t=>{
+    if(t.type==='income'){assets[t.asset].in+=t.amount;tin+=t.amount}
+    else{assets[t.asset].out+=t.amount;tout+=t.amount}
+  });
+  ['safe','cash','bank'].forEach(a=>{
+    document.getElementById(a+'Balance').textContent=won(assets[a].in-assets[a].out);
+    document.getElementById(a+'Income').textContent='수입 '+won(assets[a].in);
+  });
+  document.getElementById('sumIncome').textContent=won(tin);
+  document.getElementById('sumExpense').textContent=won(tout);
+  document.getElementById('sumBalance').textContent=won(tin-tout);
+
+  const body=document.getElementById('txBody'); body.innerHTML='';
+  if(!state.transactions.length){body.innerHTML='<tr><td colspan="6" class="empty">아직 내역이 없어요.</td></tr>';return;}
+  state.transactions.forEach(t=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${t.date}</td><td>${esc(t.content)}</td><td><b>${t.type==='income'?'수입':'지출'}</b></td><td>${assetName(t.asset)}</td><td class="money">${won(t.amount)}</td><td><button class="delete">삭제</button></td>`;
+    tr.querySelector('.delete').onclick=()=>deleteTx(t.id); body.appendChild(tr);
+  });
+}
+
+document.getElementById('saveSaved').addEventListener('click',()=>{
+  state.savedTotal=num(document.getElementById('savedTotal').value);save();renderMonthly();
+});
+document.getElementById('addExpense').addEventListener('click',()=>{
+  const name=document.getElementById('expName').value.trim();
+  const amount=num(document.getElementById('expAmount').value);
+  if(!name){alert('지출 이름을 입력해 주세요.');return;}
+  if(amount<=0){alert('금액을 입력해 주세요.');return;}
+  state.expenses.push({id:Date.now(),name,amount,paid:0});
+  save();renderMonthly();
+  document.getElementById('expName').value='';document.getElementById('expAmount').value='';
+});
+function deleteExpense(id){
+  state.expenses=state.expenses.filter(x=>x.id!==id);save();renderMonthly();
+}
+function savePaid(id,input){
+  const x=state.expenses.find(e=>e.id===id); if(!x)return;
+  x.paid=num(input.value); save(); renderMonthly();
+}
+function renderMonthly(){
+  document.getElementById('savedTotal').value=state.savedTotal||'';
+  const totalPaid=state.expenses.reduce((s,e)=>s+(Number(e.paid)||0),0);
+  document.getElementById('paidTotal').value=totalPaid.toLocaleString('ko-KR');
+  document.getElementById('remainingTotal').textContent=won(state.savedTotal-totalPaid);
+  const body=document.getElementById('expBody'); body.innerHTML='';
+  if(!state.expenses.length){body.innerHTML='<tr><td colspan="4" class="empty">지출을 추가해 주세요.</td></tr>';return;}
+  state.expenses.forEach(e=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(e.name)}</td><td>${won(e.amount)}</td>
+      <td><div class="manage-wrap"><input class="paid-input" inputmode="numeric" value="${e.paid||''}" placeholder="이번 달 낸 금액"><button class="save-small">저장</button></div></td>
+      <td><button class="delete">삭제</button></td>`;
+    tr.querySelector('.save-small').onclick=()=>savePaid(e.id,tr.querySelector('.paid-input'));
+    tr.querySelector('.delete').onclick=()=>deleteExpense(e.id);
+    body.appendChild(tr);
+  });
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+renderProfile(); renderLedger(); renderMonthly();
+</script>
+
+<script>
+(function(){
+  const input = document.getElementById('profileInput');
+  const img = document.getElementById('profileImg');
+  const ph = document.getElementById('profilePlaceholder');
+  if(!input || !img) return;
+
+  function showProfile(data){
+    if(!data) return;
+    img.src = data;
+    img.style.display = 'block';
+    if(ph) ph.style.display = 'none';
+  }
+
+  try { showProfile(localStorage.getItem('profilePhotoData')); } catch(e){}
+
+  input.addEventListener('change', function(){
+    const file = this.files && this.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const data = e.target.result;
+      showProfile(data);
+      try { localStorage.setItem('profilePhotoData', data); } catch(err){}
+    };
+    reader.readAsDataURL(file);
+  });
+})();
+</script>
+
+</body>
+</html>
