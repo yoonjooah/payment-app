@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>금액 관리</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:#080808;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.app{max-width:760px;margin:auto;padding:24px 12px 40px}
+h1{color:#fff;font-size:30px;margin:0 5px 20px;font-weight:900}
+.card{background:#fff;border-radius:26px;padding:18px 16px;margin-bottom:16px}
+h2{font-size:22px;margin:0 0 16px;font-weight:900}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-size:15px;font-weight:800;margin-bottom:6px}
+input,.box{width:100%;height:54px;border:2px solid #ddd;border-radius:17px;background:#fff;padding:0 12px;font-size:19px;outline:none}
+input:focus{border-color:#aaa}
+hr{border:0;border-top:2px solid #111;margin:17px 0 15px}
+.totalrow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:20px;font-weight:900}
+.totalrow b{font-size:24px;white-space:nowrap}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.summary label{font-size:13px}
+.summary .box{height:52px;background:#f7f7f7;display:flex;align-items:center;font-size:17px;font-weight:900;white-space:nowrap;padding:0 8px}
+.full input{height:54px}
+.storage{display:grid;grid-template-columns:90px 1fr;gap:9px 12px;align-items:center}
+.storage label{margin:0}
+@media(max-width:430px){
+ .app{padding:20px 10px 35px}
+ h1{font-size:28px;margin:0 3px 17px}
+ .card{border-radius:23px;padding:16px 13px;margin-bottom:14px}
+ h2{font-size:20px;margin-bottom:14px}
+ .two{gap:8px}
+ label{font-size:14px;margin-bottom:5px}
+ input{height:49px;font-size:17px;border-radius:15px}
+ .totalrow{font-size:18px}.totalrow b{font-size:22px}
+ .three{gap:6px}.summary label{font-size:11px}
+ .summary .box{height:48px;font-size:15px;padding:0 6px;border-radius:14px}
+ .storage{grid-template-columns:78px 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>금액 관리</h1>
+
+<section class="card">
+<h2>전날 일한금액</h2>
+<div class="two">
+ <div><label>현금</label><input id="prevCash" inputmode="numeric" placeholder="0"></div>
+ <div><label>계좌</label><input id="prevAccount" inputmode="numeric" placeholder="0"></div>
+</div>
+<hr>
+<div class="totalrow"><span>전날 총금액</span><b id="prevTotal">0원</b></div>
+</section>
+
+<section class="card">
+<h2>당일 일한금액</h2>
+<div class="two">
+ <div><label>현금</label><input id="todayCash" inputmode="numeric" placeholder="0"></div>
+ <div><label>계좌</label><input id="todayAccount" inputmode="numeric" placeholder="0"></div>
+</div>
+<hr>
+<div class="totalrow"><span>당일 총금액</span><b id="todayTotal">0원</b></div>
+</section>
+
+<section class="card summary">
+<h2>전날 + 당일 총금액</h2>
+<div class="three">
+ <div><label>현금 합계</label><div class="box" id="cashSum">0원</div></div>
+ <div><label>계좌 합계</label><div class="box" id="accountSum">0원</div></div>
+ <div><label>총합 금액</label><div class="box" id="grandTotal">0원</div></div>
+</div>
+</section>
+
+<section class="card full">
+<h2>가게에 받아야 할 금액</h2>
+<input id="shopDue" inputmode="numeric" placeholder="0">
+</section>
+
+</div>
+
+<script>
+const ids=["prevCash","prevAccount","todayCash","todayAccount","shopDue"];
+const $=id=>document.getElementById(id);
+const num=v=>Number(String(v||"").replace(/[^0-9-]/g,""))||0;
+const won=n=>n.toLocaleString("ko-KR")+"원";
+const KEY="amount_manager_v1";
+let data={};
+try{data=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){}
+ids.forEach(id=>{
+ if(data[id]!==undefined) $(id).value=data[id];
+ $(id).addEventListener("input",()=>{
+   data[id]=$(id).value;
+   localStorage.setItem(KEY,JSON.stringify(data));
+   calc();
+ });
+});
+function calc(){
+ const pc=num($("prevCash").value), pa=num($("prevAccount").value);
+ const tc=num($("todayCash").value), ta=num($("todayAccount").value);
+ $("prevTotal").textContent=won(pc+pa);
+ $("todayTotal").textContent=won(tc+ta);
+ $("cashSum").textContent=won(pc+tc);
+ $("accountSum").textContent=won(pa+ta);
+ $("grandTotal").textContent=won(pc+pa+tc+ta);
+}
+calc();
+</script>
+</body>
+</html>
