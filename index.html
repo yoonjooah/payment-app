@@ -5,126 +5,152 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<title>현금 계좌 관리</title>
+<title>금액 관리</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
-.app{max-width:760px;margin:auto;min-height:100vh;padding:28px 18px 50px}
-h1{font-size:30px;margin:5px 0 22px}
-.card{background:#fff;color:#111;border-radius:22px;padding:20px;margin-bottom:18px}
-.title{font-size:23px;font-weight:800;margin-bottom:15px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-label{display:block;font-weight:750;margin-bottom:7px}
-input{width:100%;height:52px;border:1.5px solid #ddd;border-radius:14px;padding:0 14px;font-size:19px;background:#fff;color:#111}
-button{border:0;border-radius:14px;background:#000;color:#fff;font-size:17px;font-weight:800;padding:15px 18px}
-.add{width:100%;margin-top:14px}
-table{width:100%;border-collapse:collapse;margin-top:18px}
-th,td{padding:13px 5px;border-bottom:1px solid #e7e7e7;text-align:right;font-size:15px}
-th:first-child,td:first-child{text-align:left}
-.del{padding:8px 9px;font-size:13px}
-.total{display:flex;justify-content:space-between;align-items:center;font-size:21px;font-weight:900;margin-top:16px;padding-top:16px;border-top:2px solid #111}
+.app{max-width:760px;margin:auto;min-height:100vh;padding:24px 14px 50px}
+h1{font-size:30px;margin:4px 4px 20px}
+.card{background:#fff;color:#111;border-radius:22px;padding:18px 15px;margin-bottom:16px}
+.title{font-size:22px;font-weight:900;margin-bottom:14px}
+.row{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:8px;align-items:end}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+label{display:block;font-weight:800;font-size:15px;margin-bottom:6px}
+input{width:100%;height:50px;border:1.5px solid #ddd;border-radius:13px;padding:0 10px;font-size:17px;background:#fff;color:#111}
+input[readonly]{background:#f4f4f4;font-weight:900}
+.total{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:20px;font-weight:900;margin-top:14px;padding-top:14px;border-top:2px solid #111}
+.big{font-size:24px}
 .grand{font-size:26px}
-.empty{text-align:center!important;color:#888;padding:25px}
-@media(max-width:500px){.app{padding:22px 12px 40px}.card{padding:17px 14px}.grid{gap:8px}th,td{font-size:13px;padding:11px 3px}}
+.note{font-size:13px;color:#777;margin-top:8px}
+@media(max-width:430px){
+ .app{padding:20px 10px 40px}
+ .card{padding:16px 12px}
+ .row{gap:6px}
+ label{font-size:13px}
+ input{font-size:15px;padding:0 7px}
+ .total{font-size:18px}
+ .big,.grand{font-size:22px}
+}
 </style>
+
+<style>
+h1{font-size:23px!important}
+.title{font-size:17px!important}
+label{font-size:12px!important}
+input{font-size:14px!important;height:46px!important}
+.total{font-size:15px!important}
+.big,.grand{font-size:18px!important}
+.note{font-size:11px!important}
+</style>
+
 </head>
 <body>
 <div class="app">
-<h1>현금 · 계좌</h1>
+<h1>금액 관리</h1>
 
 <div class="card">
-  <div class="title">금액 입력</div>
-  <div class="grid">
-    <div><label>현금</label><input id="cash" inputmode="numeric" placeholder="예: 100000"></div>
-    <div><label>계좌입금</label><input id="deposit" inputmode="numeric" placeholder="예: 50000"></div>
-    <div><label>계좌출금</label><input id="withdrawal" inputmode="numeric" placeholder="예: 30000"></div>
-    <div><label>잔액</label><input id="balance" inputmode="numeric" placeholder="예: 120000"></div>
+  <div class="title">전날 일한금액</div>
+  <div class="row">
+    <div><label>전날 일한금액</label><input id="prevWork" inputmode="numeric" placeholder="0"></div>
+    <div><label>현금</label><input id="prevCash" inputmode="numeric" placeholder="0"></div>
+    <div><label>계좌</label><input id="prevAccount" inputmode="numeric" placeholder="0"></div>
   </div>
-  <button class="add" id="addRow">+ 추가</button>
+  <div class="total big"><span>전날 총금액</span><span id="prevTotal">0원</span></div>
+</div>
 
-  <table>
-    <thead>
-      <tr><th>현금</th><th>입금</th><th>출금</th><th>잔액</th><th></th></tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
+<div class="card">
+  <div class="title">당일 일한금액</div>
+  <div class="row">
+    <div><label>당일 일한금액</label><input id="todayWork" inputmode="numeric" placeholder="0"></div>
+    <div><label>현금</label><input id="todayCash" inputmode="numeric" placeholder="0"></div>
+    <div><label>계좌</label><input id="todayAccount" inputmode="numeric" placeholder="0"></div>
+  </div>
+  <div class="total big"><span>당일 총금액</span><span id="todayTotal">0원</span></div>
+</div>
 
-  <div class="total"><span>현금 합계</span><span id="cashTotal">0원</span></div>
-  <div class="total"><span>계좌입금 합계</span><span id="depositTotal">0원</span></div>
-  <div class="total"><span>계좌출금 합계</span><span id="withdrawalTotal">0원</span></div>
-  <div class="total"><span>잔액 합계</span><span id="balanceTotal">0원</span></div>
-  <div class="total grand"><span>받을 금액</span><span id="grandTotal">0원</span></div>
+<div class="card">
+  <div class="title">전날 + 당일 총금액</div>
+  <div class="row">
+    <div><label>현금 합계</label><input id="combinedCash" readonly value="0원"></div>
+    <div><label>계좌 합계</label><input id="combinedAccount" readonly value="0원"></div>
+    <div><label>총합 금액</label><input id="workGrand" readonly value="0원"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="title">가게에 받아야 할 금액</div>
+  <input id="storeDue" inputmode="numeric" placeholder="0">
+</div>
+
+<div class="card">
+  <div class="title">현금 · 계좌</div>
+  <div>
+    <label>현금</label>
+    <input id="cash" inputmode="numeric" placeholder="0">
+  </div>
+
+  <div class="row2" style="margin-top:12px">
+    <div><label>계좌입금</label><input id="deposit" inputmode="numeric" placeholder="0"></div>
+    <div><label>계좌출금</label><input id="withdrawal" inputmode="numeric" placeholder="0"></div>
+  </div>
+
+  <div style="margin-top:12px">
+    <label>잔액</label>
+    <input id="accountBalance" inputmode="numeric" placeholder="0">
+  </div>
+  <div class="total grand"><span>잔액</span><span id="balanceView">0원</span></div>
 </div>
 </div>
 
 <script>
-const KEY='cash_account_v1';
-let rows=JSON.parse(localStorage.getItem(KEY)||'[]');
+const KEY='money_manager_prev_today_v1';
+const ids=['prevWork','prevCash','prevAccount','todayWork','todayCash','todayAccount','storeDue','cash','deposit','withdrawal','accountBalance'];
 const $=id=>document.getElementById(id);
 const num=v=>Number(String(v||'').replace(/[^0-9-]/g,''))||0;
-const won=n=>Number(n||0).toLocaleString('ko-KR')+'원';
+const won=n=>num(n).toLocaleString('ko-KR')+'원';
 
-function save(){localStorage.setItem(KEY,JSON.stringify(rows))}
-function render(){
-  const body=$('rows'); body.innerHTML='';
-  let cash=0,deposit=0,withdrawal=0,balance=0;
+let saved={};
+try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){saved={}}
 
-  rows.forEach((r,i)=>{
-    cash+=r.cash;
-    deposit+=r.deposit;
-    withdrawal+=r.withdrawal;
-    balance+=r.balance;
-
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${r.cash.toLocaleString('ko-KR')}</td>
-                  <td>${r.deposit.toLocaleString('ko-KR')}</td>
-                  <td>${r.withdrawal.toLocaleString('ko-KR')}</td>
-                  <td>${r.balance.toLocaleString('ko-KR')}</td>
-                  <td><button class="del" data-i="${i}">삭제</button></td>`;
-    body.appendChild(tr);
+ids.forEach(id=>{
+  $(id).value=saved[id]||'';
+  $(id).addEventListener('input',()=>{
+    saved[id]=$(id).value;
+    localStorage.setItem(KEY,JSON.stringify(saved));
+    calc();
   });
+});
 
-  if(!rows.length){
-    body.innerHTML='<tr><td colspan="5" class="empty">금액을 추가해 주세요.</td></tr>';
-  }
+function calc(){
+  const prevWork=num($('prevWork').value);
+  const prevCash=num($('prevCash').value);
+  const prevAccount=num($('prevAccount').value);
+  const todayWork=num($('todayWork').value);
+  const todayCash=num($('todayCash').value);
+  const todayAccount=num($('todayAccount').value);
 
-  $('cashTotal').textContent=won(cash);
-  $('depositTotal').textContent=won(deposit);
-  $('withdrawalTotal').textContent=won(withdrawal);
-  $('balanceTotal').textContent=won(balance);
+  // 각 날짜의 총금액 = 일한금액 + 현금 + 계좌
+  const prevTotal=prevWork+prevCash+prevAccount;
+  const todayTotal=todayWork+todayCash+todayAccount;
 
-  // 요청대로 현금 + 계좌출금만 합산
-  $('grandTotal').textContent=won(cash + withdrawal);
+  $('prevTotal').textContent=won(prevTotal);
+  $('todayTotal').textContent=won(todayTotal);
 
-  document.querySelectorAll('.del').forEach(btn=>btn.onclick=()=>{
-    rows.splice(Number(btn.dataset.i),1);
-    save();
-    render();
-  });
-}
+  // 전날 + 당일: 현금끼리, 계좌끼리 따로 합산하고 옆에 전체 총합 표시
+  const combinedCash=prevCash+todayCash;
+  const combinedAccount=prevAccount+todayAccount;
+  $('combinedCash').value=won(combinedCash);
+  $('combinedAccount').value=won(combinedAccount);
+  $('workGrand').value=won(prevTotal+todayTotal);
 
-$('addRow').onclick=()=>{
   const cash=num($('cash').value);
   const deposit=num($('deposit').value);
   const withdrawal=num($('withdrawal').value);
-  const balance=num($('balance').value);
+  const balance=num($('accountBalance').value);
 
-  if(!cash&&!deposit&&!withdrawal&&!balance){
-    alert('금액을 입력해 주세요.');
-    return;
-  }
-
-  rows.push({cash,deposit,withdrawal,balance});
-  save();
-  render();
-
-  $('cash').value='';
-  $('deposit').value='';
-  $('withdrawal').value='';
-  $('balance').value='';
-};
-
-render();
+  $('balanceView').textContent=won(balance);
+}
+calc();
 </script>
 </body>
 </html>
