@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="theme-color" content="#ffffff" />
+<title>현금 금액 계산기</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --card:#ffffff;
+    --text:#111827;
+    --sub:#6b7280;
+    --line:#e5e7eb;
+    --accent:#2563eb;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .wrap{
+    max-width:520px;
+    margin:0 auto;
+    padding:24px 16px calc(28px + env(safe-area-inset-bottom));
+  }
+  h1{
+    margin:8px 0 6px;
+    font-size:28px;
+    text-align:center;
+    letter-spacing:-.6px;
+  }
+  .desc{
+    margin:0 0 20px;
+    text-align:center;
+    color:var(--sub);
+    font-size:14px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:20px;
+    padding:8px 16px;
+    box-shadow:0 2px 14px rgba(0,0,0,.05);
+  }
+  .row{
+    display:grid;
+    grid-template-columns:92px 1fr;
+    gap:14px;
+    align-items:center;
+    padding:16px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .row:last-child{border-bottom:0}
+  .denom{
+    font-size:18px;
+    font-weight:800;
+    white-space:nowrap;
+  }
+  .inputbox{
+    display:grid;
+    grid-template-columns:1fr auto;
+    align-items:center;
+    border:1.5px solid #d1d5db;
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  input{
+    width:100%;
+    border:0;
+    outline:none;
+    padding:13px 12px;
+    font-size:20px;
+    text-align:right;
+    background:transparent;
+    color:var(--text);
+  }
+  .unit{
+    padding-right:12px;
+    color:var(--sub);
+    font-size:15px;
+    font-weight:700;
+  }
+  .subtotal{
+    grid-column:2;
+    margin-top:-8px;
+    text-align:right;
+    color:var(--sub);
+    font-size:14px;
+  }
+  .total{
+    margin-top:18px;
+    background:#111827;
+    color:#fff;
+    border-radius:22px;
+    padding:22px 18px;
+    text-align:center;
+  }
+  .total .label{font-size:15px;opacity:.75}
+  .total .amount{
+    margin-top:6px;
+    font-size:34px;
+    font-weight:900;
+    letter-spacing:-1px;
+  }
+  button{
+    width:100%;
+    margin-top:12px;
+    border:0;
+    border-radius:16px;
+    padding:15px;
+    font-size:17px;
+    font-weight:800;
+    background:#e5e7eb;
+    color:#111827;
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>현금 금액 계산기</h1>
+    <p class="desc">계수기에서 나온 장수만 입력하면 총금액이 자동으로 계산돼요.</p>
+
+    <section class="card">
+      <div class="row">
+        <div class="denom">50,000원</div>
+        <div class="inputbox"><input id="n50000" type="number" min="0" inputmode="numeric" placeholder="0"><span class="unit">장</span></div>
+        <div class="subtotal" id="s50000">0원</div>
+      </div>
+      <div class="row">
+        <div class="denom">10,000원</div>
+        <div class="inputbox"><input id="n10000" type="number" min="0" inputmode="numeric" placeholder="0"><span class="unit">장</span></div>
+        <div class="subtotal" id="s10000">0원</div>
+      </div>
+      <div class="row">
+        <div class="denom">5,000원</div>
+        <div class="inputbox"><input id="n5000" type="number" min="0" inputmode="numeric" placeholder="0"><span class="unit">장</span></div>
+        <div class="subtotal" id="s5000">0원</div>
+      </div>
+      <div class="row">
+        <div class="denom">1,000원</div>
+        <div class="inputbox"><input id="n1000" type="number" min="0" inputmode="numeric" placeholder="0"><span class="unit">장</span></div>
+        <div class="subtotal" id="s1000">0원</div>
+      </div>
+    </section>
+
+    <section class="total">
+      <div class="label">총 현금</div>
+      <div class="amount" id="grandTotal">0원</div>
+    </section>
+
+    <button id="resetBtn" type="button">전체 지우기</button>
+  </main>
+
+<script>
+const denoms = [50000,10000,5000,1000];
+
+function fmt(n){ return n.toLocaleString('ko-KR') + '원'; }
+
+function calc(){
+  let total = 0;
+  denoms.forEach(v=>{
+    const input = document.getElementById('n'+v);
+    const count = Math.max(0, parseInt(input.value || '0', 10) || 0);
+    const sub = count * v;
+    document.getElementById('s'+v).textContent = fmt(sub);
+    total += sub;
+  });
+  document.getElementById('grandTotal').textContent = fmt(total);
+}
+
+denoms.forEach(v=>{
+  document.getElementById('n'+v).addEventListener('input', calc);
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  denoms.forEach(v=>document.getElementById('n'+v).value='');
+  calc();
+});
+
+calc();
+</script>
+</body>
+</html>
