@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<title>시재 관리</title>
+<title>현금 계좌 관리</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
@@ -22,7 +22,7 @@ table{width:100%;border-collapse:collapse;margin-top:18px}
 th,td{padding:13px 5px;border-bottom:1px solid #e7e7e7;text-align:right;font-size:15px}
 th:first-child,td:first-child{text-align:left}
 .del{padding:8px 9px;font-size:13px}
-.total{display:flex;justify-content:space-between;align-items:center;font-size:22px;font-weight:900;margin-top:16px;padding-top:16px;border-top:2px solid #111}
+.total{display:flex;justify-content:space-between;align-items:center;font-size:21px;font-weight:900;margin-top:16px;padding-top:16px;border-top:2px solid #111}
 .grand{font-size:26px}
 .empty{text-align:center!important;color:#888;padding:25px}
 @media(max-width:500px){.app{padding:22px 12px 40px}.card{padding:17px 14px}.grid{gap:8px}th,td{font-size:13px;padding:11px 3px}}
@@ -30,37 +30,35 @@ th:first-child,td:first-child{text-align:left}
 </head>
 <body>
 <div class="app">
-<h1>시재</h1>
+<h1>현금 · 계좌</h1>
 
 <div class="card">
-  <div class="title">가게</div>
-  <div><label>가게 금액</label><input id="storeAmount" inputmode="numeric" placeholder="예: 30000"></div>
-  <div class="total"><span>가게 합계</span><span id="storeTotal">0원</span></div>
-</div>
-
-<div class="card">
-  <div class="title">건수 / 인센</div>
+  <div class="title">금액 입력</div>
   <div class="grid">
-    <div><label>건수 금액</label><input id="countAmount" inputmode="numeric" placeholder="예: 130000"></div>
-    <div><label>인센 현금</label><input id="incentiveCash" inputmode="numeric" placeholder="예: 100000"></div>
-    <div><label>인센 이체</label><input id="incentiveTransfer" inputmode="numeric" placeholder="예: 50000"></div>
+    <div><label>현금</label><input id="cash" inputmode="numeric" placeholder="예: 100000"></div>
+    <div><label>계좌입금</label><input id="deposit" inputmode="numeric" placeholder="예: 50000"></div>
+    <div><label>계좌출금</label><input id="withdrawal" inputmode="numeric" placeholder="예: 30000"></div>
+    <div><label>잔액</label><input id="balance" inputmode="numeric" placeholder="예: 120000"></div>
   </div>
   <button class="add" id="addRow">+ 추가</button>
 
   <table>
-    <thead><tr><th>건수</th><th>현금</th><th>이체</th><th>가게</th><th></th></tr></thead>
+    <thead>
+      <tr><th>현금</th><th>입금</th><th>출금</th><th>잔액</th><th></th></tr>
+    </thead>
     <tbody id="rows"></tbody>
   </table>
 
-  <div class="total"><span>건수 합계</span><span id="countTotal">0원</span></div>
-  <div class="total"><span>인센 현금 합계</span><span id="cashTotal">0원</span></div>
-  <div class="total"><span>인센 이체 합계</span><span id="transferTotal">0원</span></div>
-  <div class="total grand"><span>일한금액</span><span id="grandTotal">0원</span></div>
+  <div class="total"><span>현금 합계</span><span id="cashTotal">0원</span></div>
+  <div class="total"><span>계좌입금 합계</span><span id="depositTotal">0원</span></div>
+  <div class="total"><span>계좌출금 합계</span><span id="withdrawalTotal">0원</span></div>
+  <div class="total"><span>잔액 합계</span><span id="balanceTotal">0원</span></div>
+  <div class="total grand"><span>받을 금액</span><span id="grandTotal">0원</span></div>
 </div>
 </div>
 
 <script>
-const KEY='sijae_black_v2';
+const KEY='cash_account_v1';
 let rows=JSON.parse(localStorage.getItem(KEY)||'[]');
 const $=id=>document.getElementById(id);
 const num=v=>Number(String(v||'').replace(/[^0-9-]/g,''))||0;
@@ -68,37 +66,64 @@ const won=n=>Number(n||0).toLocaleString('ko-KR')+'원';
 
 function save(){localStorage.setItem(KEY,JSON.stringify(rows))}
 function render(){
- const body=$('rows'); body.innerHTML='';
- let count=0,cash=0,transfer=0,store=0;
- rows.forEach((r,i)=>{
-   count+=r.count; cash+=r.cash; transfer+=r.transfer; store+=r.store;
-   const tr=document.createElement('tr');
-   tr.innerHTML=`<td>${r.count.toLocaleString('ko-KR')}</td><td>${r.cash.toLocaleString('ko-KR')}</td><td>${r.transfer.toLocaleString('ko-KR')}</td><td>${r.store.toLocaleString('ko-KR')}</td><td><button class="del" data-i="${i}">삭제</button></td>`;
-   body.appendChild(tr);
- });
- if(!rows.length) body.innerHTML='<tr><td colspan="5" class="empty">금액을 추가해 주세요.</td></tr>';
- $('countTotal').textContent=won(count);
- $('cashTotal').textContent=won(cash);
- $('transferTotal').textContent=won(transfer);
- $('storeTotal').textContent=won(store);
- // 가게 합계는 일한금액에서 제외
- $('grandTotal').textContent=won(count+cash+transfer);
- document.querySelectorAll('.del').forEach(btn=>btn.onclick=()=>{
-   rows.splice(Number(btn.dataset.i),1); save(); render();
- });
+  const body=$('rows'); body.innerHTML='';
+  let cash=0,deposit=0,withdrawal=0,balance=0;
+
+  rows.forEach((r,i)=>{
+    cash+=r.cash;
+    deposit+=r.deposit;
+    withdrawal+=r.withdrawal;
+    balance+=r.balance;
+
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.cash.toLocaleString('ko-KR')}</td>
+                  <td>${r.deposit.toLocaleString('ko-KR')}</td>
+                  <td>${r.withdrawal.toLocaleString('ko-KR')}</td>
+                  <td>${r.balance.toLocaleString('ko-KR')}</td>
+                  <td><button class="del" data-i="${i}">삭제</button></td>`;
+    body.appendChild(tr);
+  });
+
+  if(!rows.length){
+    body.innerHTML='<tr><td colspan="5" class="empty">금액을 추가해 주세요.</td></tr>';
+  }
+
+  $('cashTotal').textContent=won(cash);
+  $('depositTotal').textContent=won(deposit);
+  $('withdrawalTotal').textContent=won(withdrawal);
+  $('balanceTotal').textContent=won(balance);
+
+  // 요청대로 현금 + 계좌출금만 합산
+  $('grandTotal').textContent=won(cash + withdrawal);
+
+  document.querySelectorAll('.del').forEach(btn=>btn.onclick=()=>{
+    rows.splice(Number(btn.dataset.i),1);
+    save();
+    render();
+  });
 }
+
 $('addRow').onclick=()=>{
- const count=num($('countAmount').value);
- const cash=num($('incentiveCash').value);
- const transfer=num($('incentiveTransfer').value);
- const store=num($('storeAmount').value);
- if(!count&&!cash&&!transfer&&!store){alert('금액을 입력해 주세요.');return}
- rows.push({count,cash,transfer,store}); save(); render();
- $('countAmount').value='';
- $('incentiveCash').value='';
- $('incentiveTransfer').value='';
- $('storeAmount').value='';
+  const cash=num($('cash').value);
+  const deposit=num($('deposit').value);
+  const withdrawal=num($('withdrawal').value);
+  const balance=num($('balance').value);
+
+  if(!cash&&!deposit&&!withdrawal&&!balance){
+    alert('금액을 입력해 주세요.');
+    return;
+  }
+
+  rows.push({cash,deposit,withdrawal,balance});
+  save();
+  render();
+
+  $('cash').value='';
+  $('deposit').value='';
+  $('withdrawal').value='';
+  $('balance').value='';
 };
+
 render();
 </script>
 </body>
