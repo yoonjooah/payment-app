@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>윤주아의 가계부</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#fff;color:#403b3d;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.app{max-width:760px;margin:auto;padding:28px 16px 60px} h1{text-align:center;font-size:34px;margin:15px 0 30px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:25px}.tab{border:2px solid #edd4de;border-radius:40px;padding:17px;text-align:center;font-size:22px;font-weight:800}.tab.active{background:#fdebf2}
+.balances{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}.balance{border:2px solid #eddde2;border-radius:24px;padding:18px 13px;min-height:145px}.balance:nth-child(1){background:#fffaf1}.balance:nth-child(2){background:#fff6fa}.balance:nth-child(3){background:#f5faff}.balance .name{font-size:20px}.balance .amount{font-size:29px;font-weight:900;margin:20px 0 8px}.balance .sub{color:#9d9497;font-size:15px}
+.card{border:2px solid #eedce3;border-radius:25px;padding:20px;margin-bottom:22px}.title{font-size:27px;font-weight:900;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 14px}label{font-size:16px;font-weight:800;display:block;margin-bottom:7px}
+input,select{width:100%;height:50px;border:2px solid #ead9df;border-radius:18px;background:#fff;padding:0 13px;font-size:16px;color:#403b3d}
+.full{grid-column:1/-1}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}button{border:0;border-radius:18px;padding:15px;font-size:18px;font-weight:900;background:#fbe5ed;color:#a65b76}.reset{color:#ef5e83;background:#fff0f4}
+table{width:100%;border-collapse:collapse;font-size:14px}th{background:#fcebf1;padding:12px 5px}td{padding:12px 5px;border-bottom:1px solid #f2e4e9;text-align:center}.del{padding:7px 8px;font-size:12px;border-radius:10px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.sum{border:2px solid #eadde2;border-radius:20px;padding:15px 12px}.sum:nth-child(1){background:#fffaf1}.sum:nth-child(2){background:#fff6fa}.sum:nth-child(3){background:#f5faff}.sum span{display:block;color:#8f878a}.sum b{display:block;font-size:25px;margin-top:8px}
+.empty{color:#999;padding:25px!important}.foot{text-align:center;color:#999}
+@media(max-width:500px){.app{padding:20px 10px 45px}h1{font-size:29px}.balances{gap:7px}.balance{padding:15px 9px}.balance .name{font-size:16px}.balance .amount{font-size:24px}.card{padding:16px 12px}.title{font-size:23px}.grid{gap:10px}table{font-size:12px}}
+</style>
+</head>
+<body><div class="app">
+<h1>윤주아의 가계부 🐶</h1>
+<div class="tabs">
+<div class="tab active" id="ledgerTab">가계부</div>
+<div class="tab" id="monthlyTab">매달 지출</div>
+</div>
+<div id="ledgerPage">
+
+<div class="balances">
+ <div class="balance"><div class="name">금고 🔒</div><div class="amount" id="safeBal">0원</div><div class="sub">수입 <span id="safeIn">0원</span></div></div>
+ <div class="balance"><div class="name">현금 👛</div><div class="amount" id="cashBal">0원</div><div class="sub">수입 <span id="cashIn">0원</span></div></div>
+ <div class="balance"><div class="name">계좌 🏦</div><div class="amount" id="accountBal">0원</div><div class="sub">수입 <span id="accountIn">0원</span></div></div>
+</div>
+
+<div class="card">
+ <div class="title">가계부 내역</div>
+ <div class="grid">
+  <div><label>날짜</label><input id="date" type="date"></div>
+  <div><label>내용</label><input id="memo" placeholder="내용"></div>
+  <div><label>구분</label><select id="type"><option value="수입">수입</option><option value="지출">지출</option></select></div>
+  <div><label>금액</label><input id="amount" inputmode="numeric" placeholder="금액"></div>
+  <div class="full"><label>보관/사용처</label><select id="place"><option value="금고">금고 🔒</option><option value="계좌">계좌 🏦</option><option value="현금">현금 👛</option></select></div>
+ </div>
+ <div class="buttons"><button id="add">추가하기</button><button class="reset" id="reset">초기화</button></div>
+</div>
+
+<div class="card"><div class="title">가계부 목록</div>
+<table><thead><tr><th>날짜</th><th>내용</th><th>구분</th><th>금액</th><th>보관</th><th></th></tr></thead><tbody id="rows"></tbody></table>
+</div>
+
+
+</div>
+<div id="monthlyPage" style="display:none">
+  <div class="card">
+    <div class="title">매달 지출</div>
+    <label>총금액</label>
+    <input id="monthlyBudget" inputmode="numeric" placeholder="총금액을 입력하세요">
+  </div>
+
+  <div class="card">
+    <div class="title">지출 추가</div>
+    <div class="grid">
+      <div><label>이름</label><input id="expenseName" placeholder="예: 월세"></div>
+      <div><label>금액</label><input id="expenseAmount" inputmode="numeric" placeholder="금액"></div>
+      <div class="full"><label>낸금액</label><input id="expensePaid" inputmode="numeric" placeholder="내가 낸 금액"></div>
+    </div>
+    <div class="buttons"><button id="expenseAdd">추가하기</button><button class="reset" id="expenseReset">초기화</button></div>
+  </div>
+
+  <div class="card">
+    <div class="title">매달 지출 목록</div>
+    <table>
+      <thead><tr><th>이름</th><th>금액</th><th>낸금액</th><th>관리</th></tr></thead>
+      <tbody id="expenseRows"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="title">지출 합계</div>
+    <div class="summary">
+      <div class="sum"><span>금액 합산</span><b id="expenseTotal">0원</b></div>
+      <div class="sum"><span>낸금액</span><b id="paidTotal">0원</b></div>
+      <div class="sum"><span>남은금액</span><b id="remainingTotal">0원</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">오늘도 알뜰한 하루 되세요 ♡</div>
+</div>
+<script>
+const KEY='yoon_household_v1', $=x=>document.getElementById(x), won=n=>(n||0).toLocaleString('ko-KR')+'원';
+let rows=[];try{rows=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
+$('date').value=new Date().toISOString().slice(0,10);
+function save(){localStorage.setItem(KEY,JSON.stringify(rows))}
+function render(){
+ let ti=0,to=0,bal={금고:0,계좌:0,현금:0},inc={금고:0,계좌:0,현금:0};
+ $('rows').innerHTML='';
+ rows.forEach((r,i)=>{let sign=r.type==='수입'?1:-1;bal[r.place]+=sign*r.amount;if(sign>0){ti+=r.amount;inc[r.place]+=r.amount}else to+=r.amount;
+ let tr=document.createElement('tr');tr.innerHTML=`<td>${r.date}</td><td>${r.memo||'-'}</td><td>${r.type}</td><td>${won(r.amount)}</td><td>${r.place}</td><td><button class="del" data-i="${i}">삭제</button></td>`;$('rows').appendChild(tr)});
+ if(!rows.length)$('rows').innerHTML='<tr><td colspan="6" class="empty">등록된 내역이 없습니다.</td></tr>';
+ $('safeBal').textContent=won(bal.금고);$('cashBal').textContent=won(bal.현금);$('accountBal').textContent=won(bal.계좌);
+ $('safeIn').textContent=won(inc.금고);$('cashIn').textContent=won(inc.현금);$('accountIn').textContent=won(inc.계좌);
+ document.querySelectorAll('.del').forEach(b=>b.onclick=()=>{rows.splice(+b.dataset.i,1);save();render()});
+}
+$('add').onclick=()=>{let a=Number($('amount').value.replace(/[^0-9]/g,''))||0;if(!a)return alert('금액을 입력해 주세요.');
+ rows.push({date:$('date').value,memo:$('memo').value,type:$('type').value,amount:a,place:$('place').value});save();render();$('memo').value='';$('amount').value='';};
+$('reset').onclick=()=>{if(confirm('가계부 내역을 모두 초기화할까요?')){rows=[];save();render()}};
+
+const MONTHLY_KEY='yoon_monthly_expense_v1';
+let monthly={budget:'',items:[]};
+try{monthly=JSON.parse(localStorage.getItem(MONTHLY_KEY)||'{"budget":"","items":[]}')}catch(e){}
+if(!Array.isArray(monthly.items)) monthly.items=[];
+
+function mnum(v){return Number(String(v||'').replace(/[^0-9-]/g,''))||0}
+function saveMonthly(){localStorage.setItem(MONTHLY_KEY,JSON.stringify(monthly))}
+function renderMonthly(){
+  $('monthlyBudget').value=monthly.budget||'';
+  let amountTotal=0,paidTotal=0;
+  $('expenseRows').innerHTML='';
+  monthly.items.forEach((r,i)=>{
+    amountTotal+=r.amount;
+    paidTotal+=r.paid;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.name}</td><td>${won(r.amount)}</td>
+    <td><input class="paidEdit" data-i="${i}" inputmode="numeric" value="${r.paid||''}" style="height:38px;min-width:80px"></td>
+    <td><button class="del expenseDel" data-i="${i}">삭제</button></td>`;
+    $('expenseRows').appendChild(tr);
+  });
+  if(!monthly.items.length)$('expenseRows').innerHTML='<tr><td colspan="4" class="empty">등록된 지출이 없습니다.</td></tr>';
+  $('expenseTotal').textContent=won(amountTotal);
+  $('paidTotal').textContent=won(paidTotal);
+  $('remainingTotal').textContent=won(mnum(monthly.budget)-paidTotal);
+
+  document.querySelectorAll('.paidEdit').forEach(el=>el.onchange=()=>{
+    monthly.items[+el.dataset.i].paid=mnum(el.value);saveMonthly();renderMonthly();
+  });
+  document.querySelectorAll('.expenseDel').forEach(el=>el.onclick=()=>{
+    monthly.items.splice(+el.dataset.i,1);saveMonthly();renderMonthly();
+  });
+}
+
+$('monthlyBudget').oninput=()=>{monthly.budget=$('monthlyBudget').value;saveMonthly();renderMonthly()};
+$('expenseAdd').onclick=()=>{
+  const name=$('expenseName').value.trim();
+  const amount=mnum($('expenseAmount').value);
+  const paid=mnum($('expensePaid').value);
+  if(!name)return alert('이름을 입력해 주세요.');
+  if(!amount)return alert('금액을 입력해 주세요.');
+  monthly.items.push({name,amount,paid});saveMonthly();renderMonthly();
+  $('expenseName').value='';$('expenseAmount').value='';$('expensePaid').value='';
+};
+$('expenseReset').onclick=()=>{
+  if(confirm('매달 지출을 모두 초기화할까요?')){monthly={budget:'',items:[]};saveMonthly();renderMonthly()}
+};
+
+$('ledgerTab').onclick=()=>{
+ $('ledgerPage').style.display='block';$('monthlyPage').style.display='none';
+ $('ledgerTab').classList.add('active');$('monthlyTab').classList.remove('active');
+};
+$('monthlyTab').onclick=()=>{
+ $('ledgerPage').style.display='none';$('monthlyPage').style.display='block';
+ $('monthlyTab').classList.add('active');$('ledgerTab').classList.remove('active');
+};
+renderMonthly();
+
+render();
+</script></body></html>
